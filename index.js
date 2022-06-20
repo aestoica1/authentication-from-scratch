@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require("mongoose");
 const User = require('./models/user');
-const bcrypt = require('bcrypt');
 const session = require('express-session');
 
 mongoose.connect('mongodb://localhost:27017/authDemo', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -17,13 +16,9 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
-// to parse the request body
 app.use(express.urlencoded({extended:true}));
-// sessions
 app.use(session({secret: 'notagoodsecret'}));
 
-// check in logged in middleware
-// checks if you are logged in by looking in the session forr user_id
 const requireLogin = (req, res, next) => {
     if (!req.session.user_id) {
         return res.redirect('/login');
@@ -42,7 +37,6 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req,res) => {
     const { username, password } = req.body;
     const user = new User({ username, password });
-    // we'll hash the password in our user model using a <pre> middleware
     await user.save();
     req.session.user_id = user._id;
     res.redirect('/');
@@ -56,7 +50,6 @@ app.post('/login', async (req,res) => {
     const { username, password } = req.body;
     const foundUser = await User.findAndValidate(username, password)
     if (foundUser) {
-        // if succesfully loged in will store the userID in the session
         req.session.user_id = foundUser._id;
         res.redirect('/secret');
     } else {
@@ -66,7 +59,6 @@ app.post('/login', async (req,res) => {
 
 app.post('/logout', (req, res) => {
     req.session.user_id = null;
-    // req.session.destroy();
     res.redirect('/login');
 })
 
